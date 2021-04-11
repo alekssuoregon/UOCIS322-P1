@@ -23,6 +23,8 @@ log = logging.getLogger(__name__)
 import socket    # Basic TCP/IP communication on the internet
 import _thread   # Response computation runs concurrently with main program
 
+import os.path
+
 
 def listen(portnum):
     """
@@ -91,8 +93,26 @@ def respond(sock):
 
     parts = request.split()
     if len(parts) > 1 and parts[0] == "GET":
-        transmit(STATUS_OK, sock)
-        transmit(CAT, sock)
+        file_name = parts[1][1:]
+        if any(forbidden_value in parts[1] for forbidden_value in ("~", "..", "//")): 
+            print("STATUS_FORBIDDEN")
+            transmit(STATUS_FORBIDDEN, sock)
+        elif not file_name.endswith((".html", ".css")):
+            print("STATUS_NOT_IMPLEMENTED")
+            transmit(STATUS_NOT_IMPLEMENTED, sock)
+        elif not os.path.isfile(file_name):
+            print("STATUS_NOT_FOUND")
+            transmit(STATUS_NOT_FOUND, sock)
+        else:
+            print("STATUS_OK")
+            message_contents = ""
+            with open(file_name, 'r') as in_file:
+                message_contents = in_file.read()
+            transmit(STATUS_OK, sock)
+            transmit(message_contents, sock)
+
+        #transmit(STATUS_OK, sock)
+        #transmit(CAT, sock)
     else:
         log.info("Unhandled request: {}".format(request))
         transmit(STATUS_NOT_IMPLEMENTED, sock)
@@ -140,6 +160,7 @@ def main():
     port = options.PORT
     if options.DEBUG:
         log.setLevel(logging.DEBUG)
+    os.chdir(options.DOCROOT)
     sock = listen(port)
     log.info("Listening on port {}".format(port))
     log.info("Socket is {}".format(sock))

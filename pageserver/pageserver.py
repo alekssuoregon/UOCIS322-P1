@@ -94,15 +94,19 @@ def respond(sock):
     parts = request.split()
     if len(parts) > 1 and parts[0] == "GET":
         file_name = parts[1][1:]
+        #Check if any of the forbidden symbols is used
         if any(forbidden_value in parts[1] for forbidden_value in ("~", "..", "//")): 
             print("STATUS_FORBIDDEN")
             transmit(STATUS_FORBIDDEN, sock)
+        #Make sure the file requested is either a .html or .css file
         elif not file_name.endswith((".html", ".css")):
             print("STATUS_NOT_IMPLEMENTED")
             transmit(STATUS_NOT_IMPLEMENTED, sock)
+        #Make sure the file actually exists
         elif not os.path.isfile(file_name):
             print("STATUS_NOT_FOUND")
             transmit(STATUS_NOT_FOUND, sock)
+        #Send the contents of the requested file
         else:
             print("STATUS_OK")
             message_contents = ""
@@ -110,9 +114,6 @@ def respond(sock):
                 message_contents = in_file.read()
             transmit(STATUS_OK, sock)
             transmit(message_contents, sock)
-
-        #transmit(STATUS_OK, sock)
-        #transmit(CAT, sock)
     else:
         log.info("Unhandled request: {}".format(request))
         transmit(STATUS_NOT_IMPLEMENTED, sock)
@@ -160,6 +161,7 @@ def main():
     port = options.PORT
     if options.DEBUG:
         log.setLevel(logging.DEBUG)
+    #Change directories to the DOCROOT so file finding works correctly
     os.chdir(options.DOCROOT)
     sock = listen(port)
     log.info("Listening on port {}".format(port))

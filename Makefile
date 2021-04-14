@@ -12,7 +12,6 @@ install:
 # The "or true" tells 'make' not to complain about shutting down with Ctrl-C
 # 
 run:	pageserver/pageserver.py
-	cp credentials.ini pageserver
 	python3 pageserver/pageserver.py 
 
 # When run as "make start" and "make stop", all arguments come from 
@@ -20,7 +19,6 @@ run:	pageserver/pageserver.py
 # run directly, and then start.sh can take other command line arguments. 
 #
 start:	pageserver/pageserver.py 
-	cp credentials.ini pageserver
 	bash start.sh
 
 stop:   ,pypid 
